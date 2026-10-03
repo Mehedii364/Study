@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Academic Graduation Cap / Book Icon for Political Theory -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M54,32L26,45l28,13l28,-13L54,32z" />
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M34,54v14c0,9 9,16 20,16s20,-7 20,-16V54L54,63L34,54z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M78,48v22" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M76,70h4v6h-4z" />
+</vector>

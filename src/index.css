@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  
+  .font-serif-bn {
+    font-family: 'Tiro Bangla', Georgia, serif;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 12mm 16mm 12mm;
+    @bottom-right {
+      content: "পৃষ্ঠা " counter(page);
+      font-size: 9pt;
+      font-weight: 600;
+      color: #334155;
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+    @bottom-left {
+      content: "রাষ্ট্রবিজ্ঞান (Political Science) · রাজনৈতিক তত্ত্ব (Political Theory) - প্রথম পত্র (১১১৯০১) · সংকলনে: মোঃ মেহেদী হাসান (fb.com/mehedi3643)";
+      font-size: 8pt;
+      color: #64748b;
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+    @top-right {
+      content: "জাতীয় বিশ্ববিদ্যালয় · রাষ্ট্রবিজ্ঞান (Political Science) ১ম পত্র";
+      font-size: 7.5pt;
+      color: #94a3b8;
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-page-break,
+  .pdf-page-sheet {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+}

@@ -1,0 +1,130 @@
+name: Android Build & APK Generation
+
+on:
+  push:
+    branches: [ main, master ]
+    paths-ignore:
+      - 'APK_DOWNLOAD/**'
+      - '.build-outputs/**'
+      - 'README.md'
+      - '.gitignore'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Real Android Debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x ./gradlew
+
+      - name: Gradle Dependency Cache & Assembly
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: Locate and Verify Generated APK
+        id: find_apk
+        run: |
+          echo "=== Locating Real Generated APK ==="
+          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" -type f | head -n 1)
+          
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "ERROR: Generated APK not found under app/build/outputs/apk/debug!"
+            exit 1
+          fi
+          
+          echo "Found generated APK at: $APK_PATH"
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+
+      - name: Validate APK Structure and File Integrity
+        run: |
+          APK_FILE="${{ steps.find_apk.outputs.apk_path }}"
+          echo "=== Inspecting APK file attributes ==="
+          ls -lh "$APK_FILE"
+          file "$APK_FILE"
+          
+          # Check size is non-zero and reasonable (> 1MB)
+          FILE_SIZE=$(stat -c%s "$APK_FILE")
+          echo "APK Size in bytes: $FILE_SIZE"
+          if [ "$FILE_SIZE" -lt 500000 ]; then
+            echo "ERROR: APK file size ($FILE_SIZE bytes) is suspiciously small or invalid!"
+            exit 1
+          fi
+          
+          # Validate zip archive integrity of the APK
+          echo "=== Validating APK zip structure ==="
+          unzip -t "$APK_FILE" || { echo "ERROR: APK is not a valid zip/APK archive!"; exit 1; }
+
+      - name: Copy Real APK to Output Folders
+        run: |
+          APK_FILE="${{ steps.find_apk.outputs.apk_path }}"
+          
+          mkdir -p .build-outputs
+          mkdir -p APK_DOWNLOAD
+          
+          cp "$APK_FILE" .build-outputs/app-debug.apk
+          cp "$APK_FILE" APK_DOWNLOAD/app-debug.apk
+          
+          ls -lh .build-outputs/app-debug.apk
+          ls -lh APK_DOWNLOAD/app-debug.apk
+
+      - name: Verify SHA256 Hashes Match
+        run: |
+          HASH_1=$(sha256sum .build-outputs/app-debug.apk | awk '{print $1}')
+          HASH_2=$(sha256sum APK_DOWNLOAD/app-debug.apk | awk '{print $1}')
+          
+          echo "SHA256 (.build-outputs/app-debug.apk): $HASH_1"
+          echo "SHA256 (APK_DOWNLOAD/app-debug.apk):  $HASH_2"
+          
+          if [ "$HASH_1" != "$HASH_2" ]; then
+            echo "ERROR: SHA256 checksums do not match between output copies!"
+            exit 1
+          fi
+          
+          echo "SHA256 Checksum Verified: $HASH_1"
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: APK_DOWNLOAD/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit Real APK to Repository for Direct Browser Download
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git add -f .build-outputs/app-debug.apk
+          git add -f APK_DOWNLOAD/app-debug.apk
+          
+          if git diff --cached --quiet; then
+            echo "No changes in APK binary. Skipping commit."
+          else
+            git commit -m "build: update real debug APK [skip ci]"
+            git push
+            echo "Successfully committed and pushed real debug APK to repository!"
+          fi

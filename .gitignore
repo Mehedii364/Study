@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Android build outputs & local config
+.gradle/
+app/build/
+local.properties
+*.iml
+.idea/
+
+# Explicitly track downloadable APKs
+!.build-outputs/
+!.build-outputs/*
+!APK_DOWNLOAD/
+!APK_DOWNLOAD/*
